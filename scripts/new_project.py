@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 TEMPLATE = Path(__file__).resolve().parent.parent / "assets" / "project-template"
-STAGES = ["1-excel", "2-deck", "3-script", "4-audio", "5-video"]
+STAGES = ["assets", "1-excel", "1-excel/sources", "2-deck", "3-script", "4-audio", "5-video"]
 
 
 def main():

@@ -1,40 +1,64 @@
 ---
 name: excel-to-narrated-video
-description: Team workflow for turning a financial Excel into an approved Persian PowerPoint, narration script, ElevenLabs voiceover, and a PowerPoint-exported narrated video (e.g. an AGM / فیلم مجمع). People do each stage in Grok, ElevenLabs, and PowerPoint and approve it; the agent sets up the project folder, checks every number against the Excel, prepares TTS text, and computes slide timings. Projects are handed off between team members.
-example-prompt: یک پروژه‌ی جدید فیلم مجمع ۱۴۰۵ در D:\Majmae-1405 بساز.
+description: Guided team workflow for an AGM video (فیلم مجمع) of a company listed on the Tehran Stock Exchange or Iran Fara Bourse. It goes financial Excel → Persian PowerPoint (Grok) → narration (Grok) → ElevenLabs voice → PowerPoint video export. The agent guides the user step by step, collects company info (name, symbol, logo, agenda), applies listed-company AGM content rules, checks every number against the Excel, and supports handoff between team members.
+example-prompt: می‌خواهم برای مجمع شرکتمان فیلم بسازم.
 ---
 
-# Excel → Deck → Narration → Voice → Video (human-run, team handoff)
+# فیلم مجمع: Excel → Deck → Narration → Voice → Video
 
-People run every stage in the tool's own UI and approve it. The agent assists; it never automates Grok/ElevenLabs, skips an approval, or fixes a number on its own.
+You are the user's **guide**. People run each stage in Grok, ElevenLabs, and PowerPoint and approve it. You lead them through the process, ask for what is missing, check the work, and always say the one next step. Never automate Grok or ElevenLabs, skip an approval, or fix a number on your own. Talk to the user in Persian.
 
-## Start or resume a project
+## On every invocation
 
-- **New project:** `python scripts/new_project.py "<folder>" --name "<project name>" --year <year>`. It creates `1-excel` … `5-video`, `PROJECT.md`, `settings.md`, `approvals.md`, and `handoff-log.md`. It never overwrites files. Then ask who holds each role and write them in `PROJECT.md`.
-- **Existing project:** read `PROJECT.md` first, starting with «تحویل و وضعیت فعلی». It is the source for decisions, roles, file names, prompts, and the next step. Do only that step.
+1. **Find the project.** Ask for the project folder, or offer to create one. Suggest `<drive>:\Majmae-<year>`.
+   - New: `python scripts/new_project.py "<folder>" --name "<name>" --year <year>`
+   - Existing: read `PROJECT.md` «تحویل و وضعیت فعلی» and `company.md`.
+2. **Tell the user where they are:** the current stage, what is done, and what is missing.
+3. **Do the agent part** of the current stage. See below.
+4. **End with the next step** as one short instruction: who does what, in which tool, and which file to save where. Example: «حالا در grok.com فایل اکسل و لوگو را آپلود کن، پرامپت ۲ را از `PROJECT.md` بده و خروجی را با اسم `2-deck/deck-v1.pptx` ذخیره کن.»
+5. Update «تحویل و وضعیت فعلی» and the checkboxes in `PROJECT.md`. Add a row to `handoff-log.md` when the owner changes.
 
-`PROJECT.md` (from `assets/project-template/`) holds the full stage guide, the Grok prompts, the file-naming rules, and the PowerPoint steps. Do not duplicate it here.
+## Stage 0: company intake (guided)
 
-## What the agent does per stage
+Ask the questions in `company.md` in **small groups of 3 or 4**. Give a suggested answer where one exists. Accept "پیشنهادی را قبول دارم". Groups:
+1. Company: full name, symbol, market, logo file.
+2. Meeting: type, fiscal year end, date, format (in person, DIMA electronic, or hybrid), and where the video will be used.
+3. Agenda: ask the user to paste the agenda text from the Codal invitation (آگهی دعوت). Do not invent agenda items.
+4. Auditor and type of audit opinion, proposed dividend per share, and Chair and CEO names (optional).
+5. Documents: the Codal PDFs into `1-excel/sources/`. Check each one off.
 
-1. **Excel** — List sheets and key figures with sheet/cell as the review reference. Never edit the Excel.
-2. **Deck** — `python scripts/check_numbers.py <approved.xlsx> <deck-vN.pptx> -o 2-deck/deck-vN-check.md`. Also check Persian RTL, Persian digits, and fonts by rendering a slide or reading the text.
-3. **Script** — Run the same check on `script-vN.md`. Then write `3-script/script-tts.md`: the same text per slide, with numbers, percentages, dates, and units as Persian words.
-4. **Audio** — Check that there is one `slide-NN.mp3` per slide, non-empty. Measure lengths with `ffprobe`. Write `4-audio/timings.md`: slide, audio length, and auto-advance = length + 1 s (rounded up to 0.25 s).
-5. **Video** — After export, check the MP4 with `ffprobe`: duration ≈ sum of the timings, one video and one audio stream.
+Write the answers into `company.md` as you go. Ask the user to put the logo at `assets/logo.png`. Check that the file exists and is a PNG or SVG. If it has no transparent background, tell the user.
 
-After each step, update «تحویل و وضعیت فعلی» and the stage checkbox in `PROJECT.md`. Add a row to `handoff-log.md` when the owner changes.
+## Content rules: read before stages 2, 3, and 5
+
+Read `references/listed-company-agm.md`. In short:
+- The slide order follows the meeting agenda.
+- Numbers come only from the approved Excel and the published audited statements.
+- Nothing material that is not yet disclosed on Codal goes in the video.
+- The dividend is a "board proposal", and Article 129 transactions are "for ratification".
+- The audit opinion type is stated in full.
+- The tone is neutral, with no forward-looking promises.
+- Fill the Grok prompts in `PROJECT.md` with the data from `company.md` before giving them to the user.
+- The reference file is a checklist, not legal advice. Items marked [تأیید شود] must be confirmed by the company's AGM affairs or legal team. Say so when one of them matters.
+
+## Agent part per stage
+
+0. **Intake:** as above.
+1. **Excel:** list the sheets and key figures with sheet and cell. Compare the headline figures with the audited statements in `sources/` when they are readable. Never edit the Excel.
+2. **Deck:** `python scripts/check_numbers.py <approved.xlsx> <deck-vN.pptx> -o 2-deck/deck-vN-check.md`. Then review against the rules: agenda order, logo and company name, audit opinion, "proposed" dividend, no undisclosed information, Persian RTL and Persian digits.
+3. **Script:** run the same number check on `script-vN.md` and the same rules review on tone and wording. Then write `3-script/script-tts.md`: the same text per slide, with numbers, percentages, dates, and units as Persian words.
+4. **Audio:** check that there is one non-empty `slide-NN.mp3` per slide. Use `ffprobe` to write `4-audio/timings.md`: for each slide, the audio length and the auto-advance time (length + 1 s, rounded up to 0.25 s).
+5. **Video:** check the MP4 with `ffprobe`: the duration is close to the sum of the timings, with one video and one audio stream. Then walk the user through the compliance checklist in the reference file. Each item gets a yes or no from a person.
 
 ## check_numbers.py
 
-- Reads slide text, tables, and chart data (stdlib; needs only `openpyxl`). Handles Persian/Arabic digits and ٬ ٫ separators.
-- Match types: `exact`, `rounded` (to the decimals shown), `percent` (fraction ×100), and `scaled` (unit change ×1e3/1e6/1e9). `scaled` matches need a human look: the unit label must fit.
-- `NOT FOUND` is a review item, not proof of an error (years, counts). Exit code 1 means at least one is not found.
+- It reads slide text, tables, and chart data and needs only `openpyxl`. It handles Persian and Arabic digits and the ٬ ٫ separators.
+- Match types: `exact`, `rounded` (to the decimals shown), `percent` (×100), and `scaled` (×1e3, ×1e6, or ×1e9; the unit label must fit, so a person checks it).
+- `NOT FOUND` is a review item, not proof of an error (years, counts). Exit code 1 means at least one number was not found.
 
 ## Rules
 
-- The Excel the finance expert approved is the only source of numbers. Grok output is a draft until a person approves it.
-- Approved files (`-approved`) are never edited. New versions get `-vN+1`.
-- Keep paths relative to the project folder so the folder can move between people and computers.
-- No passwords or API keys in the project folder or in chat. `settings.md` holds account names, voice, and model settings only.
+- Approved files (`-approved`) are never edited. A new version gets `-vN+1`.
+- Paths stay relative to the project folder, so the folder can move between people and computers.
+- No passwords or API keys go in the project folder or in chat.
 - Do not upload, send, or publish anything unless the user asks for that step.
