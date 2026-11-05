@@ -12,7 +12,8 @@
 |---|---|
 | اسم صدا / Voice ID | — |
 | مدل | — |
-| Stability / Similarity / Style | — |
+| Stability / Similarity / Style | — (شروع: ۷۰٪ / ۷۸٪ / ۰٪) |
+| نتیجه‌ی تست مدل (Multilingual v2 در برابر v3) | — |
 | سرعت | — |
 | نمونه‌ی تأییدشده | `4-audio/slide-01.mp3` |
 

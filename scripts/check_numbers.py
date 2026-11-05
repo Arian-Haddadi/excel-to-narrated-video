@@ -5,7 +5,7 @@ Usage: python check_numbers.py <excel.xlsx> <deck.pptx|script.md> [-o report.md]
 Reads slide text, tables and chart data (stdlib zip/XML, no python-pptx needed).
 Handles Persian/Arabic digits and separators. A number matches when it equals an
 Excel value directly, after rounding to its shown decimals, as a percent of a
-fraction, or scaled by 1e3/1e6/1e9 (unit changes). Unmatched numbers are listed
+fraction, or scaled by a power of ten (unit changes, rial↔toman, همت). Unmatched numbers are listed
 for human review; nothing is changed.
 """
 import argparse
@@ -19,7 +19,8 @@ import openpyxl
 DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
 # thousands: ٬ , ، and thin/normal spaces between 3-digit groups; decimal: ٫ .
 NUM_RE = re.compile(r"(?<![\w.])-?\d{1,3}(?:[٬,،]\d{3})+(?:[٫.]\d+)?|(?<![\w.])-?\d+(?:[٫.]\d+)?")
-SCALES = (1, 1e3, 1e6, 1e9, 1e-3, 1e-6, 1e-9)
+# ponytail: every power of ten, so rial↔toman and «میلیارد»/«همت» unit changes match; all flagged `scaled` for a human
+SCALES = tuple(10.0 ** k for k in range(-13, 13))
 
 
 def parse_numbers(text):
@@ -52,11 +53,16 @@ def excel_values(path):
 
 
 def match(n, decimals, vals):
-    for v, ref in vals.items():
-        for k in SCALES:
-            for cand, how in ((v * k, "scaled" if k != 1 else "exact"), (v * 100 * k, "percent")):
-                if cand == n or round(cand, decimals) == n:
-                    return ref, how if (cand == n or how != "exact") else "rounded"
+    # strongest evidence first: same value, then fraction shown as percent, then unit changes
+    passes = [((1,), "exact"), ((100,), "percent"), (SCALES, "scaled")]
+    for factors, how in passes:
+        for v, ref in vals.items():
+            for k in factors:
+                cand = v * k
+                if cand == n:
+                    return ref, how
+                if round(cand, decimals) == n:
+                    return ref, "rounded" if how == "exact" else how
     return None, None
 
 

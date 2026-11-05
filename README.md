@@ -40,11 +40,14 @@ Ask your agent:
 |---|---|
 | `SKILL.md` | Agent instructions |
 | `references/listed-company-agm.md` | AGM content rules and compliance checklist (checklist, not legal advice) |
-| `assets/project-template/` | `company.md` (company and meeting intake), `PROJECT.md` (stage guide, Grok prompts, naming, PowerPoint steps), `settings.md`, `approvals.md`, `handoff-log.md` |
+| `assets/project-template/` | `company.md` (company and meeting intake), `lexicon.md` (pronunciation), `PROJECT.md` (stage guide, Grok prompts, naming, PowerPoint steps), `settings.md`, `approvals.md`, `handoff-log.md` |
 | `scripts/new_project.py` | Create a project folder from the template |
 | `scripts/check_numbers.py` | Compare numbers in a `.pptx` or `.md` with an `.xlsx` |
+| `scripts/tts_prep.py` | Turn the approved script into per-slide ElevenLabs text: numbers as words, pronunciation lexicon, no slide labels |
+| `references/elevenlabs-persian.md` | Persian voice guide: model test, settings, per-slide generation, listening checklist |
 
 ```bash
 python scripts/new_project.py "D:/Majmae-1405" --name "فیلم مجمع ۱۴۰۵" --year 1405
 python scripts/check_numbers.py 1-excel/majmae-1405-approved.xlsx 2-deck/deck-v1.pptx -o 2-deck/deck-v1-check.md
+python scripts/tts_prep.py 3-script/script-approved.md --lexicon lexicon.md
 ```

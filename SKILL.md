@@ -26,6 +26,7 @@ Ask the questions in `company.md` in **small groups of 3 or 4**. Give a suggeste
 3. Agenda: ask the user to paste the agenda text from the Codal invitation (آگهی دعوت). Do not invent agenda items.
 4. Auditor and type of audit opinion, proposed dividend per share, and Chair and CEO names (optional).
 5. Documents: the Codal PDFs into `1-excel/sources/`. Check each one off.
+6. Pronunciation: the company symbol, subsidiary symbols and names, and other proper names. Write them into `lexicon.md` with a phonetic spelling, for example `وتوصا` → `وَتوصا`. Suggest the spelling and let the user correct it.
 
 Write the answers into `company.md` as you go. Ask the user to put the logo at `assets/logo.png`. Check that the file exists and is a PNG or SVG. If it has no transparent background, tell the user.
 
@@ -46,15 +47,21 @@ Read `references/listed-company-agm.md`. In short:
 0. **Intake:** as above.
 1. **Excel:** list the sheets and key figures with sheet and cell. Compare the headline figures with the audited statements in `sources/` when they are readable. Never edit the Excel.
 2. **Deck:** `python scripts/check_numbers.py <approved.xlsx> <deck-vN.pptx> -o 2-deck/deck-vN-check.md`. Then review against the rules: agenda order, logo and company name, audit opinion, "proposed" dividend, no undisclosed information, Persian RTL and Persian digits.
-3. **Script:** run the same number check on `script-vN.md` and the same rules review on tone and wording. Then write `3-script/script-tts.md`: the same text per slide, with numbers, percentages, dates, and units as Persian words.
-4. **Audio:** check that there is one non-empty `slide-NN.mp3` per slide. Use `ffprobe` to write `4-audio/timings.md`: for each slide, the audio length and the auto-advance time (length + 1 s, rounded up to 0.25 s).
+3. **Script:** run the same number check on `script-vN.md` and the same rules review on tone and wording. Also check internal consistency: parts add up to their total, a figure repeated on two slides is identical, and units (ریال, تومان, همت) are used consistently. List every inconsistency for the finance expert. After approval, run `python scripts/tts_prep.py 3-script/script-approved.md --lexicon lexicon.md`. It writes `3-script/tts/slide-NN.txt` (numbers and decimals as words, lexicon applied, no «اسلاید N» headers) and `tts/report.md`. Resolve every open item through `lexicon.md` or the approved script, then run it again. Never hand-edit the `slide-NN.txt` files.
+4. **Audio:** guide the user with `references/elevenlabs-persian.md`: a model test on the hardest slide (Multilingual v2 against v3), settings recorded in `settings.md`, one file per slide, and a fix-in-lexicon, regenerate-only-that-slide loop. Check that there is one non-empty `slide-NN.mp3` per slide. Use `ffprobe` to write `4-audio/timings.md`: for each slide, the audio length and the auto-advance time (length + 1 s, rounded up to 0.25 s).
 5. **Video:** check the MP4 with `ffprobe`: the duration is close to the sum of the timings, with one video and one audio stream. Then walk the user through the compliance checklist in the reference file. Each item gets a yes or no from a person.
 
 ## check_numbers.py
 
 - It reads slide text, tables, and chart data and needs only `openpyxl`. It handles Persian and Arabic digits and the ٬ ٫ separators.
-- Match types: `exact`, `rounded` (to the decimals shown), `percent` (×100), and `scaled` (×1e3, ×1e6, or ×1e9; the unit label must fit, so a person checks it).
+- Match types: `exact`, `rounded` (to the decimals shown), `percent` (×100), and `scaled` (any power of ten, which covers ریال↔تومان and میلیارد/همت; the unit label must fit, so a person checks it).
 - `NOT FOUND` is a review item, not proof of an error (years, counts). Exit code 1 means at least one number was not found.
+
+## tts_prep.py
+
+- It splits on `اسلاید N`, `[اسلاید N]`, or `Slide N` headers and keeps each slide title as the first spoken sentence (`--no-title` drops it). It drops the scene tables and the `متن گوینده:` label.
+- It applies `lexicon.md` (whole words, longest first) before converting numbers. Numbers, decimals («ممیز … دهم/صدم/هزارم»), percents, ranges (`۱۱-۱۲` → «یازده تا دوازده»), and dates (`۱۴۰۴/۰۶/۳۱` → «سی و یکم شهریور …») become words.
+- `report.md` flags Latin letters, leftover digits and symbols, the word «اسلاید», promotional words, and slides over 5,000 characters. Exit code 1 means there are open items.
 
 ## Rules
 
