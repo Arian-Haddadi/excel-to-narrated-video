@@ -76,7 +76,8 @@ assets/    logo.png                    لوگوی رسمی
            tts/report.md               موارد باز تلفظ و لحن
 lexicon.md                             واژه‌نامه‌ی تلفظ (نماد، اختصار، نام‌ها)
 4-audio/   slide-01.mp3 ... slide-NN.mp3
-           timings.md                  طول هر صوت و زمان هر اسلاید
+           timings.md                  طول هر صوت و زمان پیشروی هر اسلاید (sync_plan.py)
+           sync.md                     زمان شروع هر جمله برای انیمیشن‌ها (sync_plan.py)
 5-video/   majmae-v1.mp4               →  majmae-approved.mp4
            deck-with-audio.pptx        پاورپوینتی که صداها در آن گذاشته شده
 ```
@@ -117,17 +118,18 @@ lexicon.md                             واژه‌نامه‌ی تلفظ (نما
   1. **تست:** کارشناس اجرا سخت‌ترین اسلاید (بیشترین عدد، نماد و اختصار) را با **Eleven Multilingual v2** و **Eleven v3** و ۲ یا ۳ صدا می‌سازد. مالک پروژه انتخاب می‌کند و مدل، صدا و تنظیمات در `settings.md` ثبت می‌شود. تنظیم شروع: Stability ۷۰٪، Similarity ۷۸٪، Style ۰٪.
   2. کارشناس اجرا **فقط متن** هر `slide-NN.txt` را در ElevenLabs کپی می‌کند و صوت را با همان شماره به اسم `4-audio/slide-NN.mp3` ذخیره می‌کند.
   3. اگر کلمه‌ای بد خوانده شد: تلفظ درست را به `lexicon.md` اضافه می‌کند، ایجنت `tts_prep.py` را دوباره اجرا می‌کند و **فقط همان اسلاید** دوباره ساخته می‌شود.
-  4. ایجنت تعداد و طول فایل‌ها را بررسی می‌کند و `timings.md` را می‌سازد.
+  4. ایجنت `scripts/sync_plan.py` را اجرا می‌کند و `timings.md` و `sync.md` را می‌سازد. اسلایدهای «تخمینی» را کارشناس با گوش چک می‌کند.
 - **تمام شدن:** تعداد فایل‌های صوتی برابر تعداد اسلایدهاست و مالک پروژه همه را با چک‌لیست گوش دادن (`references/elevenlabs-persian.md`) تأیید کرده است.
 
 ### مرحله ۵: فیلم (PowerPoint)
-- **ورودی:** `deck-approved.pptx`، `4-audio/` و `timings.md`
+- **ورودی:** `deck-approved.pptx`، `4-audio/`، `timings.md` و `sync.md`
 - **کار:** از `deck-approved.pptx` یک کپی با اسم `5-video/deck-with-audio.pptx` می‌سازد و در آن برای هر اسلاید:
   1. Insert › Audio › Audio on My PC › `slide-NN.mp3`
   2. در تب Playback: **Start: Automatically** و **Hide During Show** را فعال می‌کند.
   3. در تب Transitions: گزینه‌ی **After** را برابر زمانی می‌گذارد که در `timings.md` آمده.
-  4. اختیاری: برجسته‌سازی‌ها را طبق جدول زمان‌بندی صحنه‌ها از متن Grok اضافه می‌کند.
-  5. File › Export › Create a Video › **Full HD (1080p)** › **Use Recorded Timings and Narrations** و ذخیره با اسم `majmae-v1.mp4`.
+  4. **هماهنگ‌سازی داخل اسلاید:** برای هر ردیف `sync.md` که ستون «برجسته» دارد، روی همان عنصر اسلاید یک انیمیشن ساده (Appear، Fade یا Emphasis) می‌گذارد، با **Start: With Previous** و **Delay** برابر ستون «شروع (ثانیه)». صدای اسلاید هم باید **With Previous** و بدون Delay باشد تا هر دو از ثانیه‌ی صفر شروع شوند.
+  5. با Slide Show یک بار چند اسلاید را نگاه می‌کند. اگر برجسته‌سازی زودتر یا دیرتر از جمله است، فقط Delay همان انیمیشن را عوض می‌کند.
+  6. File › Export › Create a Video › **Full HD (1080p)** › **Use Recorded Timings and Narrations** و ذخیره با اسم `majmae-v1.mp4`.
 - **تمام شدن:** چک‌لیست تطبیق در `references/listed-company-agm.md` اسکیل کامل است. کارشناس مالی، مسئول امور مجامع و مالک پروژه کل فیلم را دیده‌اند و تأیید کرده‌اند، و فایل `majmae-approved.mp4` ذخیره شده.
 
 ---

@@ -48,8 +48,8 @@ Read `references/listed-company-agm.md`. In short:
 1. **Excel:** list the sheets and key figures with sheet and cell. Compare the headline figures with the audited statements in `sources/` when they are readable. Never edit the Excel.
 2. **Deck:** `python scripts/check_numbers.py <approved.xlsx> <deck-vN.pptx> -o 2-deck/deck-vN-check.md`. Then review against the rules: agenda order, logo and company name, audit opinion, "proposed" dividend, no undisclosed information, Persian RTL and Persian digits.
 3. **Script:** run the same number check on `script-vN.md` and the same rules review on tone and wording. Also check internal consistency: parts add up to their total, a figure repeated on two slides is identical, and units (ریال, تومان, همت) are used consistently. List every inconsistency for the finance expert. After approval, run `python scripts/tts_prep.py 3-script/script-approved.md --lexicon lexicon.md`. It writes `3-script/tts/slide-NN.txt` (numbers and decimals as words, lexicon applied, no «اسلاید N» headers) and `tts/report.md`. Resolve every open item through `lexicon.md` or the approved script, then run it again. Never hand-edit the `slide-NN.txt` files.
-4. **Audio:** guide the user with `references/elevenlabs-persian.md`: a model test on the hardest slide (Multilingual v2 against v3), settings recorded in `settings.md`, one file per slide, and a fix-in-lexicon, regenerate-only-that-slide loop. Check that there is one non-empty `slide-NN.mp3` per slide. Use `ffprobe` to write `4-audio/timings.md`: for each slide, the audio length and the auto-advance time (length + 1 s, rounded up to 0.25 s).
-5. **Video:** check the MP4 with `ffprobe`: the duration is close to the sum of the timings, with one video and one audio stream. Then walk the user through the compliance checklist in the reference file. Each item gets a yes or no from a person.
+4. **Audio:** guide the user with `references/elevenlabs-persian.md`: a model test on the hardest slide (Multilingual v2 against v3), settings recorded in `settings.md`, one file per slide, and a fix-in-lexicon, regenerate-only-that-slide loop. Check that there is one non-empty `slide-NN.mp3` per slide. Then run `python scripts/sync_plan.py <project>`. It writes `4-audio/timings.md` (audio length and auto-advance per slide) and `4-audio/sync.md` (start time of each sentence, paired with the show and highlight columns of the Grok scene table). Slides marked «تخمینی» or with a scene-table mismatch need a person to check them by ear.
+5. **Video:** guide the PowerPoint steps in `PROJECT.md`: auto-advance from `timings.md`, and each highlight animation set to With Previous with the delay from `sync.md`. Check the MP4 with `ffprobe`: the duration is close to the sum of the timings, with one video and one audio stream. Then walk the user through the compliance checklist in the reference file. Each item gets a yes or no from a person.
 
 ## check_numbers.py
 
@@ -62,6 +62,12 @@ Read `references/listed-company-agm.md`. In short:
 - It splits on `اسلاید N`, `[اسلاید N]`, or `Slide N` headers and keeps each slide title as the first spoken sentence (`--no-title` drops it). It drops the scene tables and the `متن گوینده:` label.
 - It applies `lexicon.md` (whole words, longest first) before converting numbers. Numbers, decimals («ممیز … دهم/صدم/هزارم»), percents, ranges (`۱۱-۱۲` → «یازده تا دوازده»), and dates (`۱۴۰۴/۰۶/۳۱` → «سی و یکم شهریور …») become words.
 - `report.md` flags Latin letters, leftover digits and symbols, the word «اسلاید», promotional words, and slides over 5,000 characters. Exit code 1 means there are open items.
+
+## sync_plan.py
+
+- It uses ffmpeg `silencedetect` (-35 dB, pauses ≥ 0.25 s). The N−1 longest pauses inside the speech become sentence boundaries, so short comma pauses are ignored.
+- If there are fewer pauses than sentences, it spreads the starts by sentence length and marks the slide «تخمینی». Exit code 1 means estimated slides or missing audio.
+- Scene-table rows are paired with sentences by order. When the slide title is spoken, it is the first sentence and has no row.
 
 ## Rules
 

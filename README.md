@@ -44,10 +44,12 @@ Ask your agent:
 | `scripts/new_project.py` | Create a project folder from the template |
 | `scripts/check_numbers.py` | Compare numbers in a `.pptx` or `.md` with an `.xlsx` |
 | `scripts/tts_prep.py` | Turn the approved script into per-slide ElevenLabs text: numbers as words, pronunciation lexicon, no slide labels |
+| `scripts/sync_plan.py` | Per-slide auto-advance and per-sentence start times from the audio, for PowerPoint animation delays |
 | `references/elevenlabs-persian.md` | Persian voice guide: model test, settings, per-slide generation, listening checklist |
 
 ```bash
 python scripts/new_project.py "D:/Majmae-1405" --name "فیلم مجمع ۱۴۰۵" --year 1405
 python scripts/check_numbers.py 1-excel/majmae-1405-approved.xlsx 2-deck/deck-v1.pptx -o 2-deck/deck-v1-check.md
 python scripts/tts_prep.py 3-script/script-approved.md --lexicon lexicon.md
+python scripts/sync_plan.py .
 ```
